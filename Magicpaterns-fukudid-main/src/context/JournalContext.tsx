@@ -114,6 +114,14 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+      console.log('Calculating streak:', {
+        entries: sortedEntries.map(e => e.date),
+        currentStreak,
+        mostRecentDate: mostRecentDate.toISOString(),
+        today: today.toISOString(),
+        yesterday: yesterday.toISOString()
+      });
+      
       setStreak(currentStreak);
     };
 
