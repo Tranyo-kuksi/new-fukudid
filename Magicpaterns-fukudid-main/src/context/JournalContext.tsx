@@ -35,42 +35,35 @@ interface JournalContextType {
 
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
 
-// Mock data for initial state
-const mockEntries: JournalEntry[] = [
-  {
-    id: 1,
-    title: "Amazing Project Success!",
-    content: "Today was an amazing day! I finally finished my project and got great feedback from my team. Feeling really proud of myself.",
-    date: new Date(2024, 2, 16),
-    mood: 4,
-    images: [],
-    music: [],
-    songs: []
-  },
-  {
-    id: 2,
-    title: "Keeping My Head Up",
-    content: "Feeling a bit down today. Things didn't go as planned, but I'm trying to stay positive.",
-    date: new Date(2024, 2, 15),
-    mood: 1,
-    images: [],
-    music: [],
-    songs: []
-  }
-];
-
-const mockMoodData: MoodData = {
-  '2024-03-16': 4,
-  '2024-03-15': 1,
-  '2024-03-14': 2,
-  '2024-03-13': 3,
-  '2024-03-12': 0
-};
-
 export function JournalProvider({ children }: { children: React.ReactNode }) {
-  const [entries, setEntries] = useState<JournalEntry[]>(mockEntries);
-  const [moodData, setMoodData] = useState<MoodData>(mockMoodData);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [moodData, setMoodData] = useState<MoodData>({});
   const [streak, setStreak] = useState(0);
+
+  // Load entries from localStorage on mount
+  useEffect(() => {
+    const savedEntries = localStorage.getItem('journalEntries');
+    if (savedEntries) {
+      const parsedEntries = JSON.parse(savedEntries).map((entry: any) => ({
+        ...entry,
+        date: new Date(entry.date)
+      }));
+      setEntries(parsedEntries);
+      
+      // Update mood data
+      const newMoodData: MoodData = {};
+      parsedEntries.forEach((entry: JournalEntry) => {
+        const dateKey = entry.date.toISOString().split('T')[0];
+        newMoodData[dateKey] = entry.mood;
+      });
+      setMoodData(newMoodData);
+    }
+  }, []);
+
+  // Save entries to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('journalEntries', JSON.stringify(entries));
+  }, [entries]);
 
   // Calculate streak on mount and when entries change
   useEffect(() => {
@@ -78,47 +71,45 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      let currentStreak = 0;
-      let currentDate = new Date(today);
-      
       // Sort entries by date in descending order
       const sortedEntries = [...entries].sort((a, b) => b.date.getTime() - a.date.getTime());
       
-      // Check if there's an entry for today
-      const hasEntryToday = sortedEntries.some(
-        entry => entry.date.getTime() === today.getTime()
-      );
-      
-      if (!hasEntryToday) {
-        // If no entry today, check if there was an entry yesterday
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        const hasEntryYesterday = sortedEntries.some(
-          entry => entry.date.getTime() === yesterday.getTime()
-        );
-        
-        if (!hasEntryYesterday) {
-          setStreak(0);
-          return;
-        }
+      // If no entries, streak is 0
+      if (sortedEntries.length === 0) {
+        setStreak(0);
+        return;
       }
-      
+
+      // Get the most recent entry date
+      const mostRecentEntry = sortedEntries[0];
+      const mostRecentDate = new Date(mostRecentEntry.date);
+      mostRecentDate.setHours(0, 0, 0, 0);
+
+      // If the most recent entry is not today or yesterday, streak is 0
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (mostRecentDate.getTime() !== today.getTime() && 
+          mostRecentDate.getTime() !== yesterday.getTime()) {
+        setStreak(0);
+        return;
+      }
+
       // Calculate streak
-      for (const entry of sortedEntries) {
-        const entryDate = new Date(entry.date);
+      let currentStreak = 1;
+      let currentDate = new Date(mostRecentDate);
+      
+      for (let i = 1; i < sortedEntries.length; i++) {
+        const entryDate = new Date(sortedEntries[i].date);
         entryDate.setHours(0, 0, 0, 0);
         
         const expectedDate = new Date(currentDate);
-        expectedDate.setHours(0, 0, 0, 0);
+        expectedDate.setDate(expectedDate.getDate() - 1);
         
         if (entryDate.getTime() === expectedDate.getTime()) {
           currentStreak++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else if (
-          entryDate.getTime() < expectedDate.getTime() &&
-          currentDate.getTime() - entryDate.getTime() > 2 * 24 * 60 * 60 * 1000
-        ) {
+          currentDate = new Date(entryDate);
+        } else {
           break;
         }
       }
@@ -129,107 +120,42 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
     calculateStreak();
   }, [entries]);
 
-  const addEntry = async (entry: Omit<JournalEntry, 'id' | 'date'>) => {
-    // Convert image files to base64 strings
-    const processedEntry = {
+  const addEntry = (entry: Omit<JournalEntry, 'id' | 'date'>) => {
+    const newEntry: JournalEntry = {
       ...entry,
       id: Date.now(),
-      date: new Date(),
-      images: entry.images ? await Promise.all(
-        entry.images.map(async (imageName) => {
-          try {
-            const response = await fetch(imageName);
-            const blob = await response.blob();
-            return new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
-          } catch (error) {
-            console.error('Error processing image:', error);
-            return '';
-          }
-        })
-      ) : []
+      date: new Date()
     };
-
-    setEntries(prev => [processedEntry, ...prev]);
     
-    // Update mood data
-    const dateKey = processedEntry.date.toISOString().split('T')[0];
-    setMoodData(prev => ({
-      ...prev,
-      [dateKey]: processedEntry.mood
-    }));
+    setEntries(prevEntries => {
+      const updatedEntries = [...prevEntries, newEntry];
+      
+      // Update mood data
+      const dateKey = newEntry.date.toISOString().split('T')[0];
+      setMoodData(prev => ({
+        ...prev,
+        [dateKey]: newEntry.mood
+      }));
+      
+      return updatedEntries;
+    });
   };
 
-  const updateEntry = async (id: number, updatedFields: Partial<JournalEntry>) => {
-    // Process images if they're being updated
-    const processedFields = { ...updatedFields };
-    if (updatedFields.images) {
-      processedFields.images = await Promise.all(
-        updatedFields.images.map(async (imageName) => {
-          try {
-            const response = await fetch(imageName);
-            const blob = await response.blob();
-            return new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
-          } catch (error) {
-            console.error('Error processing image:', error);
-            return '';
-          }
-        })
-      );
-    }
-
+  const updateEntry = (id: number, updatedFields: Partial<JournalEntry>) => {
     setEntries(prev => prev.map(entry => {
       if (entry.id === id) {
-        const updatedEntry = { ...entry, ...processedFields };
-        
-        // Update mood data if mood changed
-        if (updatedFields.mood !== undefined) {
-          const dateKey = entry.date.toISOString().split('T')[0];
-          setMoodData(prev => ({
-            ...prev,
-            [dateKey]: updatedFields.mood!
-          }));
-        }
-        
-        return updatedEntry;
+        return { ...entry, ...updatedFields };
       }
       return entry;
     }));
   };
 
   const deleteEntry = (id: number) => {
-    setEntries(prev => {
-      const entryToDelete = prev.find(entry => entry.id === id);
-      if (entryToDelete) {
-        const dateKey = entryToDelete.date.toISOString().split('T')[0];
-        setMoodData(prevMoodData => {
-          const newMoodData = { ...prevMoodData };
-          delete newMoodData[dateKey];
-          return newMoodData;
-        });
-      }
-      return prev.filter(entry => entry.id !== id);
-    });
+    setEntries(prev => prev.filter(entry => entry.id !== id));
   };
 
   return (
-    <JournalContext.Provider
-      value={{
-        entries,
-        moodData,
-        streak,
-        addEntry,
-        updateEntry,
-        deleteEntry
-      }}
-    >
+    <JournalContext.Provider value={{ entries, moodData, streak, addEntry, updateEntry, deleteEntry }}>
       {children}
     </JournalContext.Provider>
   );
