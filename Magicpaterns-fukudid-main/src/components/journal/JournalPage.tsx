@@ -240,29 +240,29 @@ export function JournalPage({ editingEntry = null, onEditComplete }: JournalPage
       setSongs(entry.songs || []);
     } else {
       // Check for existing draft if no entry exists
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (savedDraft) {
-        try {
-          const draft: JournalDraft = JSON.parse(savedDraft);
-          const now = Date.now();
-          const hoursSinceModified = (now - draft.lastModified) / (1000 * 60 * 60);
-          
-          // Only restore draft if it's less than 24 hours old
-          if (hoursSinceModified < 24) {
-            setTitle(draft.title);
-            setContent(draft.content);
-            setSelectedMood(draft.selectedMood);
-            setImages(draft.images);
-            setSongs(draft.songs);
-            setIsDraft(true);
-          } else {
-            localStorage.removeItem(DRAFT_STORAGE_KEY);
-          }
-        } catch (error) {
-          console.error('Error loading draft:', error);
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft: JournalDraft = JSON.parse(savedDraft);
+        const now = Date.now();
+        const hoursSinceModified = (now - draft.lastModified) / (1000 * 60 * 60);
+        
+        // Only restore draft if it's less than 24 hours old
+        if (hoursSinceModified < 24) {
+          setTitle(draft.title);
+          setContent(draft.content);
+          setSelectedMood(draft.selectedMood);
+          setImages(draft.images);
+          setSongs(draft.songs);
+          setIsDraft(true);
+        } else {
           localStorage.removeItem(DRAFT_STORAGE_KEY);
         }
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
       }
+    }
     }
   }, [entries]);
 
@@ -346,7 +346,7 @@ export function JournalPage({ editingEntry = null, onEditComplete }: JournalPage
             });
             
             return {
-              name: file.name,
+          name: file.name,
               url: base64 // Store the base64 string directly
             };
           })
@@ -508,13 +508,13 @@ export function JournalPage({ editingEntry = null, onEditComplete }: JournalPage
           Generate Prompt
         </button>
         <div className="flex space-x-2">
-          <button
-            onClick={handleSave}
+        <button
+          onClick={handleSave}
             className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center space-x-2"
-          >
+        >
             <span>Save</span>
-            <FiSend className="w-4 h-4" />
-          </button>
+          <FiSend className="w-4 h-4" />
+        </button>
         </div>
       </div>
 
