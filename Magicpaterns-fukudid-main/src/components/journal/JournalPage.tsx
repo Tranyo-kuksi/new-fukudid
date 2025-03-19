@@ -298,26 +298,26 @@ export function JournalPage({ editingEntry = null, onEditComplete }: JournalPage
   }, [debouncedSave, saveToLocalStorage]);
 
   const handleSave = () => {
-    if (!title.trim()) {
-      alert('Please add a title for your entry!');
-      return;
+    if (title.trim() && content.trim() && selectedMood !== null) {
+      const entryData = {
+        title,
+        content,
+        mood: selectedMood,
+        images: images.map(image => image.url),
+        music,
+        songs
+      };
+
+      if (todayEntry) {
+        updateEntry(todayEntry.id, entryData);
+      } else {
+        addEntry(entryData);
+      }
+
+      // Clear draft after saving
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setIsDraft(false);
     }
-    if (!content.trim() || selectedMood === null) {
-      alert('Please write something and select a mood before saving!');
-      return;
-    }
-
-    // Cancel any pending debounced saves
-    debouncedSave.cancel();
-    debouncedJournalUpdate.cancel();
-
-    // Save immediately
-    saveToLocalStorage();
-    updateJournal();
-
-    // Clear draft state
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    setIsDraft(false);
   };
 
   const generatePrompt = () => {
