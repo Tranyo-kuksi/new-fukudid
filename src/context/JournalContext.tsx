@@ -11,8 +11,14 @@ interface JournalEntry {
   songs?: any[];
 }
 
+interface MoodData {
+  [key: string]: number;
+}
+
 interface JournalContextType {
   entries: JournalEntry[];
+  moodData: MoodData;
+  streak: number;
   addEntry: (entry: Omit<JournalEntry, 'id' | 'date'>) => void;
   updateEntry: (id: number, entry: Partial<JournalEntry>) => void;
   deleteEntry: (id: number) => void;
@@ -142,7 +148,7 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <JournalContext.Provider value={{ entries, addEntry, updateEntry, deleteEntry }}>
+    <JournalContext.Provider value={{ entries, moodData, streak, addEntry, updateEntry, deleteEntry }}>
       {children}
     </JournalContext.Provider>
   );
