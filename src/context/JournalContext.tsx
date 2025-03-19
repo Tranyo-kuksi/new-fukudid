@@ -62,47 +62,45 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      let currentStreak = 0;
-      let currentDate = new Date(today);
-      
       // Sort entries by date in descending order
       const sortedEntries = [...entries].sort((a, b) => b.date.getTime() - a.date.getTime());
       
-      // Check if there's an entry for today
-      const hasEntryToday = sortedEntries.some(
-        entry => entry.date.getTime() === today.getTime()
-      );
-      
-      if (!hasEntryToday) {
-        // If no entry today, check if there was an entry yesterday
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        const hasEntryYesterday = sortedEntries.some(
-          entry => entry.date.getTime() === yesterday.getTime()
-        );
-        
-        if (!hasEntryYesterday) {
-          setStreak(0);
-          return;
-        }
+      // If no entries, streak is 0
+      if (sortedEntries.length === 0) {
+        setStreak(0);
+        return;
       }
-      
+
+      // Get the most recent entry date
+      const mostRecentEntry = sortedEntries[0];
+      const mostRecentDate = new Date(mostRecentEntry.date);
+      mostRecentDate.setHours(0, 0, 0, 0);
+
+      // If the most recent entry is not today or yesterday, streak is 0
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (mostRecentDate.getTime() !== today.getTime() && 
+          mostRecentDate.getTime() !== yesterday.getTime()) {
+        setStreak(0);
+        return;
+      }
+
       // Calculate streak
-      for (const entry of sortedEntries) {
-        const entryDate = new Date(entry.date);
+      let currentStreak = 1;
+      let currentDate = new Date(mostRecentDate);
+      
+      for (let i = 1; i < sortedEntries.length; i++) {
+        const entryDate = new Date(sortedEntries[i].date);
         entryDate.setHours(0, 0, 0, 0);
         
         const expectedDate = new Date(currentDate);
-        expectedDate.setHours(0, 0, 0, 0);
+        expectedDate.setDate(expectedDate.getDate() - 1);
         
         if (entryDate.getTime() === expectedDate.getTime()) {
           currentStreak++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else if (
-          entryDate.getTime() < expectedDate.getTime() &&
-          currentDate.getTime() - entryDate.getTime() > 2 * 24 * 60 * 60 * 1000
-        ) {
+          currentDate = new Date(entryDate);
+        } else {
           break;
         }
       }
