@@ -2,10 +2,12 @@ import React from 'react';
 import { FiUser, FiGlobe, FiCreditCard, FiMoon, FiSmile, FiLogOut, FiBell, FiLock, FiBook, FiShare2, FiTrash2 } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useJournal } from '../../context/JournalContext';
 
 export function Settings() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { streak } = useJournal();
   
   return (
     <div className="p-6 space-y-8">
@@ -18,7 +20,7 @@ export function Settings() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{user?.name || 'Guest User'}</h3>
-              <p className="text-gray-500 dark:text-gray-400">Current Streak: 0 days</p>
+              <p className="text-gray-500 dark:text-gray-400">Current Streak: {streak} days</p>
             </div>
           </div>
           <button className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
