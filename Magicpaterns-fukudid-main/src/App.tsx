@@ -6,6 +6,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { JournalProvider } from "./context/JournalContext";
 import { LoginPage } from "./components/auth/LoginPage";
 import { useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 
 export function App() {
   console.log("App component rendering");
@@ -54,24 +55,28 @@ export function App() {
   // If user is not authenticated, show login page
   if (!user) {
     return (
-      <ThemeProvider>
-        <LoginPage />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <LoginPage />
+        </ThemeProvider>
+      </AuthProvider>
     );
   }
 
   // Main app layout for authenticated users
   return (
-    <ThemeProvider>
-      <JournalProvider>
-        <div className="flex flex-col w-full min-h-screen bg-pink-50 dark:bg-gray-900 transition-colors duration-200">
-          <Header setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
-          <div className="flex flex-1 overflow-hidden relative">
-            <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} sidebarOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <JournalContent activeSection={activeSection} />
+    <AuthProvider>
+      <ThemeProvider>
+        <JournalProvider>
+          <div className="flex flex-col w-full min-h-screen bg-pink-50 dark:bg-gray-900 transition-colors duration-200">
+            <Header setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
+            <div className="flex flex-1 overflow-hidden relative">
+              <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} sidebarOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+              <JournalContent activeSection={activeSection} />
+            </div>
           </div>
-        </div>
-      </JournalProvider>
-    </ThemeProvider>
+        </JournalProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
