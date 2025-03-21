@@ -79,7 +79,7 @@ export function MoodTracker() {
             {day}
           </span>
           {mood !== undefined && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-end justify-center pb-2">
               <span className={moodIcons[mood].color}>
                 {moodIcons[mood].icon}
               </span>
