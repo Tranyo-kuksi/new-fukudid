@@ -1,6 +1,7 @@
 import React from "react";
 import { MenuIcon, XIcon, UserCircleIcon, SearchIcon, SunIcon, MoonIcon, PlusIcon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { useJournal } from "../context/JournalContext";
 import { FiMenu, FiSun, FiMoon } from 'react-icons/fi';
 import { FaFire } from 'react-icons/fa';
 
@@ -14,6 +15,7 @@ export const Header = ({
   sidebarOpen
 }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
+  const { streak } = useJournal();
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -37,7 +39,7 @@ export const Header = ({
     <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
       <div className="flex items-center space-x-1 bg-orange-100 dark:bg-gray-700 px-3 py-1 rounded-full">
         <FaFire className="text-orange-500" />
-        <span className="font-semibold">0</span>
+        <span className="font-semibold">{streak}</span>
       </div>
       <button
         onClick={toggleTheme}
